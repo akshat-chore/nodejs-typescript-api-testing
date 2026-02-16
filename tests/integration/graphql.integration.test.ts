@@ -62,6 +62,15 @@ describe('GraphQL API Integration Tests', () => {
     assert.ok(Array.isArray(result.data.tasks))
   })
 
+  // This test uses testTaskId, resolving the unused variable error
+  it('should get a single task by ID via GraphQL', async () => {
+    const query = `{ task(id: "${testTaskId}") { id title description status } }`
+    const res = await executeGraphQLQuery(query, adminToken)
+    const result = await res.json()
+    assert.equal(res.status, 200)
+    assert.equal(result.data.task.id, testTaskId)
+  })
+
   it('should return null for non-existent task', async () => {
     const query = `{ task(id: "00000000-0000-0000-0000-000000000000") { id } }`
     const res = await executeGraphQLQuery(query, adminToken)

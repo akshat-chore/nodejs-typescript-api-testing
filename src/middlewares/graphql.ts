@@ -19,5 +19,6 @@ export const setupGraphQL = async (app: Application) => {
 
   // apply the apollo middleware to handle the requests
   // cast is required due to express type duplication in apollo-server-express
-  apolloServer.applyMiddleware({ path, app: app as unknown as any })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  apolloServer.applyMiddleware({ path, app: app as any })
 }
