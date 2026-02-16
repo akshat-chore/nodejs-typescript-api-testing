@@ -15,8 +15,7 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          # Using "root" to match the default OS user in GitHub Actions
-          POSTGRES_USER: root
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: test_db
         ports:
@@ -28,7 +27,10 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: "postgresql://root:password@localhost:5432/test_db"
+      DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
+      PGUSER: postgres
+      PGPASSWORD: password
+      PGDATABASE: test_db
       NODE_ENV: test
       JWT: "test-secret-key-1234567890"
       PORT: 3000
@@ -43,9 +45,10 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
+      # Create .env file for node --env-file support
       - name: Create .env file
         run: |
-          echo "DATABASE_URL=postgresql://root:password@localhost:5432/test_db" > .env
+          echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" > .env
           echo "NODE_ENV=test" >> .env
           echo "JWT=test-secret-key-1234567890" >> .env
           echo "PORT=3000" >> .env
@@ -76,7 +79,8 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          # Use the official start command which uses the .env file
+          # Explicitly export DATABASE_URL to ensure it overrides any defaults
+          export DATABASE_URL="postgresql://postgres:password@localhost:5432/test_db"
           yarn start &
           npx wait-on http://localhost:3000/health --timeout 60000
           yarn test
