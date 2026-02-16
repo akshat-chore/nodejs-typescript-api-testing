@@ -26,6 +26,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    # Setting these at the job level makes them available to EVERY step
+    env:
+      DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
+      PGUSER: postgres
+      PGPASSWORD: password
+      USER: postgres
+      NODE_ENV: test
+      JWT: "test-secret-key-1234567890"
+      PORT: 3000
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,11 +46,10 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
-      # CREATE TEMPORARY .ENV FILE
-      # This ensures all tools (Prisma, Node, Yarn) use the right DB user
+      # Create .env immediately after checkout
       - name: Create .env file
         run: |
-          echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" >> .env
+          echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" > .env
           echo "NODE_ENV=test" >> .env
           echo "JWT=test-secret-key-1234567890" >> .env
           echo "PORT=3000" >> .env
@@ -58,7 +67,7 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Run Database Seed
-        run: node scripts/seed.js
+        run: yarn prisma:seed
 
       - name: Build Application
         run: yarn build
