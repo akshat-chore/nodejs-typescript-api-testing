@@ -74,14 +74,13 @@ jobs:
         run: yarn build
 
       - name: Run Unit Tests
-        # Run ONLY unit tests here (no server required)
         run: yarn test:unit
 
       - name: Run Integration Tests
         run: |
-          # Explicitly export DATABASE_URL to ensure it overrides any defaults
-          export DATABASE_URL="postgresql://postgres:password@localhost:5432/test_db"
+          # Start server in background
           yarn start &
+          # Wait for health endpoint to be ready
           npx wait-on http://localhost:3000/health --timeout 60000
-          # Run ONLY integration tests here (server required)
+          # Run integration tests
           yarn test:integration

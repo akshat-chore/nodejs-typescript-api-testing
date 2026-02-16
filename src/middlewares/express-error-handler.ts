@@ -7,7 +7,7 @@ export const errorMiddleware = (error: Error, request: Request, response: Respon
   }
 
   if (error instanceof AppError) {
-    response.status(error.status).send({ error: error.message })
+    response.status(error.status).send({ error: error.message, message: error.message })
     return
   }
 
