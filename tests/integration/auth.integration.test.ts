@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { describe, it, before } from 'node:test'
+import { describe, it } from 'node:test'
 
 /**
  * Integration Tests for Authentication API
@@ -19,8 +19,6 @@ import { describe, it, before } from 'node:test'
 const BASE_URL = 'http://localhost:3000'
 
 describe('Authentication API Integration Tests', () => {
-    let adminToken: string
-    let userToken: string
 
     /**
      * Test 1: Login with valid credentials (admin user)
@@ -44,9 +42,6 @@ describe('Authentication API Integration Tests', () => {
         assert.equal(response.status, 200, 'Should return 200 OK')
         assert.ok(data.token, 'Should return a token')
         assert.equal(data.type, 'bearer', 'Token type should be bearer')
-
-        // Save token for later tests
-        adminToken = data.token
     })
 
     /**
@@ -71,9 +66,6 @@ describe('Authentication API Integration Tests', () => {
         assert.equal(response.status, 200, 'Should return 200 OK')
         assert.ok(data.token, 'Should return a token')
         assert.equal(data.type, 'bearer', 'Token type should be bearer')
-
-        // Save token for later tests
-        userToken = data.token
     })
 
     /**

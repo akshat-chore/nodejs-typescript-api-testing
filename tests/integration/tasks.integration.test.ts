@@ -39,7 +39,6 @@ async function getAuthToken(username: string, password: string): Promise<string>
 describe('Tasks API Integration Tests', () => {
     let adminToken: string
     let userToken: string
-    let createdTaskId: string
 
     // Setup: Get authentication tokens before running tests
     before(async () => {
@@ -139,9 +138,6 @@ describe('Tasks API Integration Tests', () => {
         assert.equal(data.title, newTask.title, 'Title should match')
         assert.equal(data.description, newTask.description, 'Description should match')
         assert.equal(data.status, 'todo', 'Default status should be todo')
-
-        // Save task ID for later tests
-        createdTaskId = data.id
     })
 
     /**
