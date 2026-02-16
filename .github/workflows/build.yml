@@ -27,7 +27,6 @@ jobs:
           --health-retries 5
 
     env:
-      # We explicitly define these to prevent the system from defaulting to "root"
       DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
       USER: postgres
       POSTGRES_USER: postgres
@@ -56,13 +55,9 @@ jobs:
 
       - name: Run Prisma Migrations
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
 
       - name: Run Database Seed
         run: node scripts/seed.js
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
 
       - name: Build Application
         run: yarn build
@@ -70,10 +65,9 @@ jobs:
       - name: Run Unit Tests
         run: yarn test
 
+      # we bypass the "start" script because it looks for a .env file that doesn't exist in CI
       - name: Run Integration Tests
         run: |
-          yarn start &
+          node .build/src/index.js &
           npx wait-on http://localhost:3000/health --timeout 60000
           yarn test
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
