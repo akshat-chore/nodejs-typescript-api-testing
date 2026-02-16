@@ -15,7 +15,8 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: postgres
+          # Using "root" to match the default OS user in GitHub Actions
+          POSTGRES_USER: root
           POSTGRES_PASSWORD: password
           POSTGRES_DB: test_db
         ports:
@@ -27,9 +28,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
-      PGUSER: postgres
-      PGPASSWORD: password
+      DATABASE_URL: "postgresql://root:password@localhost:5432/test_db"
       NODE_ENV: test
       JWT: "test-secret-key-1234567890"
       PORT: 3000
@@ -46,15 +45,16 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" > .env
+          echo "DATABASE_URL=postgresql://root:password@localhost:5432/test_db" > .env
           echo "NODE_ENV=test" >> .env
           echo "JWT=test-secret-key-1234567890" >> .env
           echo "PORT=3000" >> .env
-          echo "PGUSER=postgres" >> .env
-          echo "PGPASSWORD=password" >> .env
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Check types
         run: yarn type-check
@@ -64,13 +64,9 @@ jobs:
 
       - name: Run Prisma Migrations
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
 
       - name: Run Database Seed
-        run: node scripts/seed.js
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
+        run: yarn prisma:seed
 
       - name: Build Application
         run: yarn build
@@ -80,10 +76,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          node .build/src/index.js &
+          # Use the official start command which uses the .env file
+          yarn start &
           npx wait-on http://localhost:3000/health --timeout 60000
           yarn test
-        env:
-          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
-          PGUSER: postgres
-          PGPASSWORD: password
