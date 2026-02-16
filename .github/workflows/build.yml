@@ -11,7 +11,6 @@ jobs:
     name: Lint, Build and Test
     runs-on: ubuntu-latest
 
-    # This creates a real PostgreSQL database inside the GitHub runner!
     services:
       postgres:
         image: postgres:16
@@ -21,7 +20,6 @@ jobs:
           POSTGRES_DB: test_db
         ports:
           - 5432:5432
-        # Wait until postgres is healthy
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -29,7 +27,10 @@ jobs:
           --health-retries 5
 
     env:
+      # We explicitly define these to prevent the system from defaulting to "root"
       DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
+      USER: postgres
+      POSTGRES_USER: postgres
       NODE_ENV: test
       JWT: "test-secret-key-1234567890"
       PORT: 3000
@@ -55,9 +56,13 @@ jobs:
 
       - name: Run Prisma Migrations
         run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
 
       - name: Run Database Seed
         run: node scripts/seed.js
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
 
       - name: Build Application
         run: yarn build
@@ -65,10 +70,10 @@ jobs:
       - name: Run Unit Tests
         run: yarn test
 
-      # we need the server running for integration tests
-      # we run it in background (&) and wait for it to be ready
       - name: Run Integration Tests
         run: |
           yarn start &
           npx wait-on http://localhost:3000/health --timeout 60000
           yarn test
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
