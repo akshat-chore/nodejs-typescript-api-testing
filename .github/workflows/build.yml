@@ -45,7 +45,6 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
-      # Create .env file for node --env-file support
       - name: Create .env file
         run: |
           echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" > .env
@@ -75,7 +74,8 @@ jobs:
         run: yarn build
 
       - name: Run Unit Tests
-        run: yarn test
+        # Run ONLY unit tests here (no server required)
+        run: yarn test:unit
 
       - name: Run Integration Tests
         run: |
@@ -83,4 +83,5 @@ jobs:
           export DATABASE_URL="postgresql://postgres:password@localhost:5432/test_db"
           yarn start &
           npx wait-on http://localhost:3000/health --timeout 60000
-          yarn test
+          # Run ONLY integration tests here (server required)
+          yarn test:integration

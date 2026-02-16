@@ -12,6 +12,8 @@
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --fix --ext .ts .",
     "test": "glob -c \"node --import tsx --no-warnings --test\" \"tests/**/*.{spec,test}.ts\"",
+    "test:unit": "glob -c \"node --import tsx --no-warnings --test\" \"tests/**/*.unit.test.ts\"",
+    "test:integration": "glob -c \"node --import tsx --no-warnings --test\" \"tests/**/*.integration.test.ts\"",
     "test:coverage": "glob -c \"c8 node --import tsx --no-warnings --test\" \"tests/**/*.{spec,test}.ts\"",
     "type-check": "yarn build --pretty --noEmit",
     "prisma:migrate": "yarn prisma migrate dev",
