@@ -26,14 +26,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
-      USER: postgres
-      POSTGRES_USER: postgres
-      NODE_ENV: test
-      JWT: "test-secret-key-1234567890"
-      PORT: 3000
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,6 +35,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'yarn'
+
+      # CREATE TEMPORARY .ENV FILE
+      # This ensures all tools (Prisma, Node, Yarn) use the right DB user
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/test_db" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "JWT=test-secret-key-1234567890" >> .env
+          echo "PORT=3000" >> .env
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -65,9 +66,8 @@ jobs:
       - name: Run Unit Tests
         run: yarn test
 
-      # we bypass the "start" script because it looks for a .env file that doesn't exist in CI
       - name: Run Integration Tests
         run: |
-          node .build/src/index.js &
+          yarn start &
           npx wait-on http://localhost:3000/health --timeout 60000
           yarn test
