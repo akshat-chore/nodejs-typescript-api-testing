@@ -1,55 +1,74 @@
-name: Build
+name: Continuous Integration
 
 on:
   push:
-    branches:
-      - main
-
-env:
-  AWS_REGION: us-east-1
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
-    name: Formatting, Linting, Types, Build and Test
+  test:
+    name: Lint, Build and Test
     runs-on: ubuntu-latest
+
+    # This creates a real PostgreSQL database inside the GitHub runner!
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        # Wait until postgres is healthy
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://postgres:password@localhost:5432/test_db"
+      NODE_ENV: test
+      JWT: "test-secret-key-1234567890"
+      PORT: 3000
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'yarn'
+
       - name: Install dependencies
-        run: yarn --prefer-offline --frozen-lockfile
-      - name: Check the types
+        run: yarn install --frozen-lockfile
+
+      - name: Check types
         run: yarn type-check
-      - name: Lint
+
+      - name: Lint code
         run: yarn lint
-      - name: Test
+
+      - name: Run Prisma Migrations
+        run: npx prisma migrate deploy
+
+      - name: Run Database Seed
+        run: node scripts/seed.js
+
+      - name: Build Application
+        run: yarn build
+
+      - name: Run Unit Tests
         run: yarn test
 
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          cache: 'yarn'
-      - name: Install dependencies
-        run: yarn --prefer-offline --frozen-lockfile
-      - name: Build
-        run: yarn build
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          mask-aws-account-id: true
-# continue with IaC + Deploy app
+      # we need the server running for integration tests
+      # we run it in background (&) and wait for it to be ready
+      - name: Run Integration Tests
+        run: |
+          yarn start &
+          npx wait-on http://localhost:3000/health --timeout 60000
+          yarn test

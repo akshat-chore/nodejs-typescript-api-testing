@@ -1,12 +1,16 @@
 import { ApolloServer } from 'apollo-server-express'
-import { Express } from 'express'
 import { resolvers } from '../graphql/resolvers.js'
 import { typeDefs } from '../graphql/schema.js'
 import { authenticationMiddleware } from './authentication.js'
+import type { Application } from 'express'
 
-export const graphqlMiddleware = async (app: Express) => {
+export const setupGraphQL = async (app: Application) => {
   const path = '/v1/graphql'
-  const apolloServer = new ApolloServer({ resolvers, typeDefs })
+
+  const apolloServer = new ApolloServer({
+    resolvers,
+    typeDefs
+  })
 
   await apolloServer.start()
 
@@ -14,5 +18,6 @@ export const graphqlMiddleware = async (app: Express) => {
   app.use(path, authenticationMiddleware)
 
   // apply the apollo middleware to handle the requests
-  apolloServer.applyMiddleware({ path, app })
+  // cast is required due to express type duplication in apollo-server-express
+  apolloServer.applyMiddleware({ path, app: app as any })
 }
