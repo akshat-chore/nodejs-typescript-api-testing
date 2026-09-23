@@ -1,4 +1,4 @@
-# Task Service (version 6)
+# Task Service (version 1)
 
 Task Service is a sample application used to handle Tasks by User. The goal here is to show in a simple project how I enjoy designing and implementing the software solutions I have creates after years of experience working as Software Engineer (since 2004) specially with NodeJs. I am always open mind to change it since there is no silver bullet to build software from my perspective.
 
